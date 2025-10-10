@@ -36,11 +36,10 @@ auth.json
 *.md
 !README.md
 
-# Docker (no copiar archivos Docker al contenedor)
+# Docker (keep config files but exclude compose files)
 Dockerfile
 docker-compose.yml
 .dockerignore
-/docker
 
 # Testing
 phpunit.xml

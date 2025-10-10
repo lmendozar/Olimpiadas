@@ -20,15 +20,14 @@ docker-compose --version
 
 ## 🚀 Inicio Rápido
 
-### Opción 1: Desde GitHub (Recomendado para Producción)
+### Método Recomendado (Código Local)
 
 ```bash
-# 1. Clona el repositorio
-git clone https://github.com/yourusername/olimpiadas.git
-cd olimpiadas
+# 1. En tu directorio del proyecto
+cd C:\DevProjects\Olimpiadas
 
 # 2. Copia y configura variables de entorno
-cp .env.docker .env
+cp env.docker.example .env
 
 # 3. Edita el .env con tus datos
 nano .env  # o notepad .env en Windows
@@ -37,7 +36,6 @@ nano .env  # o notepad .env en Windows
 # - DB_PASSWORD
 # - DB_ROOT_PASSWORD
 # - APP_KEY (se genera automáticamente si está vacío)
-# - GITHUB_REPO (tu repositorio)
 
 # 4. Construir e iniciar contenedores
 docker-compose up -d --build
@@ -49,24 +47,17 @@ docker-compose logs -f app
 # http://localhost
 ```
 
-### Opción 2: Desarrollo Local
+### Usando Script Automático
 
+#### Windows:
 ```bash
-# 1. En tu directorio del proyecto
-cd C:\DevProjects\Olimpiadas
+docker-start.bat
+```
 
-# 2. Configurar variables
-cp .env.docker .env
-# Edita según necesites
-
-# 3. Construir imagen local (sin GitHub)
-docker build -t olimpiadas-app .
-
-# 4. Iniciar servicios
-docker-compose up -d
-
-# 5. Acceder
-# http://localhost
+#### Linux/Mac:
+```bash
+chmod +x docker-start.sh
+./docker-start.sh
 ```
 
 ---
@@ -101,10 +92,6 @@ DB_ROOT_PASSWORD=otro_password_seguro
 # === DOCKER ===
 APP_PORT=80                 # Puerto de la aplicación
 PHPMYADMIN_PORT=8080        # Puerto de phpMyAdmin
-
-# === GITHUB (Para build) ===
-GITHUB_REPO=https://github.com/tu-usuario/olimpiadas.git
-GITHUB_BRANCH=main
 
 # === OTROS ===
 DB_SEED=true               # Poblar DB en primer inicio
@@ -349,39 +336,35 @@ Luego configura un proxy reverso (Nginx/Traefik) con SSL.
 
 ## 🔄 Actualización de la Aplicación
 
-### Actualizar desde GitHub:
+### Actualizar código local:
 
 ```bash
-# 1. Detener contenedores
+# 1. Hacer cambios en tu código local
+# 2. Detener contenedores
 docker-compose down
 
-# 2. Reconstruir imagen (descarga últimos cambios de GitHub)
+# 3. Reconstruir imagen con nuevos cambios
 docker-compose build --no-cache app
 
-# 3. Iniciar con nueva imagen
+# 4. Iniciar con nueva imagen
 docker-compose up -d
 
-# 4. Ejecutar migraciones si hay nuevas
+# 5. Ejecutar migraciones si hay nuevas
 docker-compose exec app php artisan migrate --force
 ```
 
-### Actualizar solo código (sin rebuild):
+### Actualizar desde repositorio Git:
 
 ```bash
-# Dentro del contenedor
-docker-compose exec app bash
-
-# Pull últimos cambios
+# 1. Pull últimos cambios
 git pull origin main
 
-# Instalar dependencias si cambiaron
-composer install --no-dev --optimize-autoloader
-npm ci && npm run build
+# 2. Reconstruir contenedor
+docker-compose down
+docker-compose up -d --build
 
-# Limpiar caché
-php artisan optimize:clear
-php artisan config:cache
-php artisan route:cache
+# 3. Ejecutar migraciones
+docker-compose exec app php artisan migrate --force
 ```
 
 ---
@@ -479,7 +462,7 @@ APP_PORT=8000
 docker-compose logs mysql
 
 # Verificar que MySQL esté listo
-docker-compose exec mysql mysqladmin ping -h localhost -u root -p
+docker-compose exec mysql mysql -u root -p -e "SELECT 1"
 ```
 
 ### Error: "Permission denied" en storage
@@ -598,7 +581,7 @@ docker secret create db_password /path/to/password/file
 
 Los health checks están configurados en `docker-compose.yml`:
 - Aplicación: Verifica endpoint `/up`
-- MySQL: Ping a la base de datos
+- MySQL: Ejecuta `SELECT 1` para verificar conectividad
 
 ### 3. Logging
 
@@ -621,20 +604,22 @@ docker-compose up -d --build
 
 ## 📦 Construcción de Imagen
 
-### Build Arguments:
+### Build Simple:
 
 ```bash
-# Construir con argumentos personalizados
-docker-compose build --build-arg GITHUB_REPO=https://github.com/otro-repo/olimpiadas.git \
-                     --build-arg GITHUB_BRANCH=develop \
-                     app
+# Construir imagen
+docker-compose build app
+
+# Construir sin caché (forzar rebuild completo)
+docker-compose build --no-cache app
 ```
 
 ### Multi-stage Build:
 
 El Dockerfile usa multi-stage build para:
-1. **Stage 1 (builder)**: Clona repo, instala dependencias, compila assets
-2. **Stage 2 (production)**: Solo copia archivos necesarios, más ligero
+1. **Stage 1 (base)**: Imagen base con PHP, Nginx, Composer y Node.js
+2. **Stage 2 (builder)**: Copia código local, instala dependencias, compila assets
+3. **Stage 3 (production)**: Imagen final optimizada con solo lo necesario para producción
 
 ---
 

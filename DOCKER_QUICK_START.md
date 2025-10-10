@@ -69,7 +69,6 @@ Edita el archivo `.env`:
 # === CAMBIAR ESTAS ===
 DB_PASSWORD=tu_password_seguro
 DB_ROOT_PASSWORD=otro_password_seguro
-GITHUB_REPO=https://github.com/tu-usuario/olimpiadas.git
 
 # === Opcional ===
 APP_PORT=80                 # Puerto de la app
@@ -109,7 +108,7 @@ DB_SEED=true               # Poblar datos de ejemplo
 
 ## 📦 Lo Que Hace el Dockerfile
 
-1. **Clona tu repositorio** desde GitHub
+1. **Copia tu código local** al contenedor
 2. **Instala PHP 8.2** + extensiones necesarias
 3. **Instala Composer** y dependencias PHP
 4. **Instala Node.js** y compila assets
@@ -180,16 +179,18 @@ docker-compose exec -T mysql mysql -u root -p olimpiadas < backup.sql
 ## 🔄 Actualizar la Aplicación
 
 ```bash
-# Detener
+# 1. Hacer cambios en tu código local
+
+# 2. Detener contenedores
 docker-compose down
 
-# Reconstruir imagen (pull de GitHub)
+# 3. Reconstruir imagen con nuevos cambios
 docker-compose build --no-cache app
 
-# Iniciar
+# 4. Iniciar
 docker-compose up -d
 
-# Ejecutar migraciones nuevas
+# 5. Ejecutar migraciones nuevas
 docker-compose exec app php artisan migrate --force
 ```
 
@@ -210,14 +211,6 @@ docker-compose up -d
 ```
 
 Acceso: http://localhost:8000
-
-### Usar Tu Propio Repositorio GitHub:
-
-En `.env`:
-```env
-GITHUB_REPO=https://github.com/tu-usuario/tu-repo.git
-GITHUB_BRANCH=main
-```
 
 ### Cambiar Versión de PHP:
 
@@ -244,7 +237,7 @@ APP_PORT=8000
 docker-compose logs mysql
 
 # Verificar salud
-docker-compose exec mysql mysqladmin ping -h localhost -u root -p
+docker-compose exec mysql mysql -u root -p -e "SELECT 1"
 ```
 
 ### Permisos de storage:
@@ -336,17 +329,18 @@ http://localhost
 ### Desarrollo Continuo:
 
 ```bash
-# Hacer cambios en código
-# Push a GitHub
-git add .
-git commit -m "Nuevas funcionalidades"
-git push
+# 1. Hacer cambios en tu código local
 
-# Actualizar contenedor
+# 2. Actualizar contenedor
 docker-compose down
 docker-compose up -d --build
 
-# ¡Listo! Cambios aplicados
+# 3. ¡Listo! Cambios aplicados
+
+# Opcional: Guardar en Git
+git add .
+git commit -m "Nuevas funcionalidades"
+git push
 ```
 
 ---
