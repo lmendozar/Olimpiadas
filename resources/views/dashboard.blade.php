@@ -6,7 +6,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Dashboard de Juegos Olímpicos</h1>
+            <h1 class="text-3xl font-bold text-gray-900">Dashboard de Olimpiadas</h1>
             <p class="mt-2 text-gray-600">Clasificación general y resultados de competencias</p>
         </div>
         <div class="grid grid-cols-4 gap-8">
