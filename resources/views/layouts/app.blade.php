@@ -41,9 +41,9 @@
                         <a href="{{ route('login') }}" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
                             Iniciar Sesión
                         </a>
-                        <a href="{{ route('register') }}" class="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        <!-- <a href="{{ route('register') }}" class="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
                             Registrarse
-                        </a>
+                        </a> -->
                     @else
                         <div class="ml-3 relative" x-data="{ open: false }">
                             <div>

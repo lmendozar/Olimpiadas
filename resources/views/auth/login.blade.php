@@ -10,10 +10,10 @@
                 Iniciar Sesión
             </h2>
             <p class="mt-2 text-center text-sm text-gray-600">
-                O
+                <!-- O
                 <a href="{{ route('register') }}" class="font-medium text-blue-600 hover:text-blue-500">
                     crear una nueva cuenta
-                </a>
+                </a> -->
             </p>
         </div>
         <form class="mt-8 space-y-6" action="{{ route('login') }}" method="POST">
