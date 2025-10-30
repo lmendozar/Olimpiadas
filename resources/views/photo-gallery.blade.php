@@ -26,30 +26,50 @@
              x-data="{
                 currentIndex: 0,
                 items: @js($galleryItems),
+                navigating: false,
+                next() {
+                    if (!this.navigating) {
+                        this.navigating = true;
+                        this.currentIndex = (this.currentIndex + 1) % this.items.length;
+                        setTimeout(() => { this.navigating = false; }, 300);
+                    }
+                },
+                prev() {
+                    if (!this.navigating) {
+                        this.navigating = true;
+                        this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length;
+                        setTimeout(() => { this.navigating = false; }, 300);
+                    }
+                },
                 init() {
                     // Keyboard navigation
-                    window.addEventListener('keydown', (e) => {
+                    const handleKeydown = (e) => {
                         if (e.key === 'ArrowLeft') {
-                            this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length;
+                            e.preventDefault();
+                            this.prev();
                         } else if (e.key === 'ArrowRight') {
-                            this.currentIndex = (this.currentIndex + 1) % this.items.length;
+                            e.preventDefault();
+                            this.next();
                         } else if (e.key === 'Home') {
+                            e.preventDefault();
                             this.currentIndex = 0;
                         } else if (e.key === 'End') {
+                            e.preventDefault();
                             this.currentIndex = this.items.length - 1;
                         }
-                    });
+                    };
+                    window.addEventListener('keydown', handleKeydown);
                     
                     // Touch/swipe support
                     let startX = 0;
                     let startY = 0;
                     
-                    window.addEventListener('touchstart', (e) => {
+                    const handleTouchStart = (e) => {
                         startX = e.touches[0].clientX;
                         startY = e.touches[0].clientY;
-                    });
+                    };
                     
-                    window.addEventListener('touchend', (e) => {
+                    const handleTouchEnd = (e) => {
                         let endX = e.changedTouches[0].clientX;
                         let endY = e.changedTouches[0].clientY;
                         let diffX = startX - endX;
@@ -58,13 +78,21 @@
                         // Check if horizontal swipe is greater than vertical
                         if (Math.abs(diffX) > Math.abs(diffY)) {
                             if (diffX > 50) {
-                                // Swipe left
-                                this.currentIndex = (this.currentIndex + 1) % this.items.length;
+                                this.next();
                             } else if (diffX < -50) {
-                                // Swipe right
-                                this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length;
+                                this.prev();
                             }
                         }
+                    };
+                    
+                    window.addEventListener('touchstart', handleTouchStart);
+                    window.addEventListener('touchend', handleTouchEnd);
+                    
+                    // Cleanup on destroy
+                    this.$el.addEventListener('remove', () => {
+                        window.removeEventListener('keydown', handleKeydown);
+                        window.removeEventListener('touchstart', handleTouchStart);
+                        window.removeEventListener('touchend', handleTouchEnd);
                     });
                 }
              }"
@@ -85,7 +113,7 @@
 
                 <!-- Navigation Arrows -->
                 <button 
-                    @click="currentIndex = (currentIndex - 1 + items.length) % items.length"
+                    @click="prev()"
                     class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-4 rounded-full shadow-lg transition-all hover:scale-110"
                     aria-label="Imagen anterior"
                 >
@@ -95,7 +123,7 @@
                 </button>
                 
                 <button 
-                    @click="currentIndex = (currentIndex + 1) % items.length"
+                    @click="next()"
                     class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-4 rounded-full shadow-lg transition-all hover:scale-110"
                     aria-label="Imagen siguiente"
                 >
@@ -180,7 +208,7 @@
                     </button>
 
                     <button 
-                        @click="currentIndex = (currentIndex - 1 + items.length) % items.length"
+                        @click="prev()"
                         :disabled="currentIndex === 0"
                         :class="currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50'"
                         class="bg-white border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 px-4 py-2 rounded-lg transition-all flex items-center gap-2 font-medium"
@@ -197,7 +225,7 @@
                     </div>
 
                     <button 
-                        @click="currentIndex = (currentIndex + 1) % items.length"
+                        @click="next()"
                         :disabled="currentIndex === items.length - 1"
                         :class="currentIndex === items.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50'"
                         class="bg-white border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 px-4 py-2 rounded-lg transition-all flex items-center gap-2 font-medium"
