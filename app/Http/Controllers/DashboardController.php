@@ -53,6 +53,25 @@ class DashboardController extends Controller
     {
         $matchRecord->load(['competition.gameType', 'alliances.people', 'winner', 'participants.alliance']);
         
+        // Sort photo gallery by filename datetime if it exists
+        if ($matchRecord->photo_gallery && count($matchRecord->photo_gallery) > 0) {
+            $sortedGallery = $matchRecord->photo_gallery;
+            usort($sortedGallery, function($a, $b) {
+                $dateA = $this->extractDateTimeFromFilename($a);
+                $dateB = $this->extractDateTimeFromFilename($b);
+                
+                if ($dateA && $dateB) {
+                    return $dateA <=> $dateB; // Ascending order (oldest first)
+                }
+                
+                if ($dateA && !$dateB) return -1;
+                if (!$dateA && $dateB) return 1;
+                
+                return 0;
+            });
+            $matchRecord->photo_gallery = $sortedGallery;
+        }
+        
         return view('match-detail', compact('matchRecord'));
     }
 
@@ -101,8 +120,23 @@ class DashboardController extends Controller
             }
         }
 
-        // Shuffle to mix match photos with event photos
-        shuffle($galleryItems);
+        // Sort by filename datetime (format: yyyyMMdd HHmmss_xxxxx.ext)
+        usort($galleryItems, function($a, $b) {
+            $dateA = $this->extractDateTimeFromFilename($a['media']);
+            $dateB = $this->extractDateTimeFromFilename($b['media']);
+            
+            // If both have valid dates, compare them
+            if ($dateA && $dateB) {
+                return $dateB <=> $dateA; // Descending order (newest first)
+            }
+            
+            // If only one has a date, prioritize it
+            if ($dateA && !$dateB) return -1;
+            if (!$dateA && $dateB) return 1;
+            
+            // If neither has a date, keep original order
+            return 0;
+        });
 
         return view('photo-gallery', compact('galleryItems'));
     }
@@ -134,6 +168,41 @@ class DashboardController extends Controller
         }
         
         return 'image';
+    }
+
+    /**
+     * Extract datetime from filename format: yyyyMMdd HHmmss_xxxxx.ext
+     * Example: 20251022_181425037_Zumba.jpg
+     */
+    private function extractDateTimeFromFilename($url): ?int
+    {
+        // Get filename from URL
+        $filename = basename(parse_url($url, PHP_URL_PATH));
+        
+        // Try to match pattern: yyyyMMdd_HHmmssSSS_xxxxx.ext
+        // The pattern is: 8 digits for date, underscore, time digits, underscore, rest
+        if (preg_match('/^(\d{8})_(\d{6,9})_/', $filename, $matches)) {
+            $dateStr = $matches[1]; // 20251022
+            $timeStr = substr($matches[2], 0, 6); // Take only HHmmss (first 6 digits)
+            
+            // Parse date and time
+            $year = substr($dateStr, 0, 4);
+            $month = substr($dateStr, 4, 2);
+            $day = substr($dateStr, 6, 2);
+            $hour = substr($timeStr, 0, 2);
+            $minute = substr($timeStr, 2, 2);
+            $second = substr($timeStr, 4, 2);
+            
+            // Create timestamp
+            try {
+                $timestamp = mktime($hour, $minute, $second, $month, $day, $year);
+                return $timestamp ?: null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+        
+        return null;
     }
 }
 
