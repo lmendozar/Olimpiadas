@@ -191,32 +191,65 @@ class DashboardController extends Controller
      */
     private function extractDateTimeFromFilename($url): ?int
     {
-        // Get filename from URL
-        $filename = basename(parse_url($url, PHP_URL_PATH));
-        
-        // Try to match pattern: yyyyMMdd_HHmmssSSS_xxxxx.ext
-        // The pattern is: 8 digits for date, underscore, time digits, underscore, rest
-        if (preg_match('/^(\d{8})_(\d{6,9})_/', $filename, $matches)) {
-            $dateStr = $matches[1]; // 20251022
-            $timeStr = substr($matches[2], 0, 6); // Take only HHmmss (first 6 digits)
-            
-            // Parse date and time
-            $year = substr($dateStr, 0, 4);
-            $month = substr($dateStr, 4, 2);
-            $day = substr($dateStr, 6, 2);
-            $hour = substr($timeStr, 0, 2);
-            $minute = substr($timeStr, 2, 2);
-            $second = substr($timeStr, 4, 2);
-            
-            // Create timestamp
-            try {
-                $timestamp = mktime($hour, $minute, $second, $month, $day, $year);
-                return $timestamp ?: null;
-            } catch (\Exception $e) {
-                return null;
-            }
+        // Normalize URL (trim spaces, decode)
+        $normalizedUrl = trim((string) $url);
+        $path = parse_url($normalizedUrl, PHP_URL_PATH) ?? '';
+        $decodedPath = urldecode($path);
+        $filename = basename($decodedPath);
+
+        // 1) Pattern: yyyyMMdd_HHmmssSSS_* (e.g., 20251022_181425037_Zumba.jpg)
+        if (preg_match('/^(\d{8})_(\d{6,9})(?:_|\.)/i', $filename, $matches)) {
+            $dateStr = $matches[1];
+            $timeStr = substr($matches[2], 0, 6); // HHmmss
+
+            $year = (int) substr($dateStr, 0, 4);
+            $month = (int) substr($dateStr, 4, 2);
+            $day = (int) substr($dateStr, 6, 2);
+            $hour = (int) substr($timeStr, 0, 2);
+            $minute = (int) substr($timeStr, 2, 2);
+            $second = (int) substr($timeStr, 4, 2);
+
+            return mktime($hour, $minute, $second, $month, $day, $year) ?: null;
         }
-        
+
+        // 2) Nextcloud-style: .../yyyyMMdd/filename (fallback to date folder)
+        // Try to locate an 8-digit date segment in the PATH when filename lacks time
+        if (preg_match('/\/(\d{8})\//', $decodedPath, $segMatch)) {
+            $dateStr = $segMatch[1]; // yyyyMMdd
+
+            // Try to also extract time from filename if present as HHmmss within digits
+            if (preg_match('/_(\d{6,9})/', $filename, $timeMatch)) {
+                $timeStr = substr($timeMatch[1], 0, 6);
+            } else if (preg_match('/(\d{6})(?!\d)/', $filename, $timeMatch)) {
+                $timeStr = $timeMatch[1];
+            } else {
+                // No explicit time in filename; default to 00:00:00 for that day
+                $timeStr = '000000';
+            }
+
+            $year = (int) substr($dateStr, 0, 4);
+            $month = (int) substr($dateStr, 4, 2);
+            $day = (int) substr($dateStr, 6, 2);
+            $hour = (int) substr($timeStr, 0, 2);
+            $minute = (int) substr($timeStr, 2, 2);
+            $second = (int) substr($timeStr, 4, 2);
+
+            return mktime($hour, $minute, $second, $month, $day, $year) ?: null;
+        }
+
+        // 3) Other common camera formats in filename
+        // a) YYYY-MM-DD_HH-MM-SS or YYYY-MM-DD HH.MM.SS
+        if (preg_match('/(\d{4})[-_\.](\d{2})[-_\.](\d{2})[ _T.-](\d{2})[-_\.](\d{2})[-_\.](\d{2})/', $filename, $m)) {
+            return mktime((int)$m[4], (int)$m[5], (int)$m[6], (int)$m[2], (int)$m[3], (int)$m[1]) ?: null;
+        }
+
+        // b) YYYYMMDD-HHMMSS or YYYYMMDDHHMMSS
+        if (preg_match('/(\d{8})[-_]?([\d]{6})/', $filename, $m)) {
+            $dateStr = $m[1];
+            $timeStr = $m[2];
+            return mktime((int)substr($timeStr, 0, 2), (int)substr($timeStr, 2, 2), (int)substr($timeStr, 4, 2), (int)substr($dateStr, 4, 2), (int)substr($dateStr, 6, 2), (int)substr($dateStr, 0, 4)) ?: null;
+        }
+
         return null;
     }
 }
