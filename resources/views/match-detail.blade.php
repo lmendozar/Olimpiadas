@@ -109,16 +109,128 @@
                 </div>
             @endif
 
-            <!-- Photo Gallery -->
+            <!-- Photo Gallery Slider -->
             @if($matchRecord->photo_gallery && count($matchRecord->photo_gallery) > 0)
                 <div class="mb-6 border-t pt-6">
                     <h2 class="text-lg font-semibold text-gray-900 mb-4">📸 Galería de Fotos</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        @foreach($matchRecord->photo_gallery as $photo)
-                            <a href="{{ $photo }}" target="_blank" class="group">
-                                <img src="{{ $photo }}" alt="Foto del evento" class="h-48 w-full object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition cursor-pointer">
+                    
+                    <!-- Slider Container -->
+                    <div class="relative" x-data="{
+                        currentIndex: 0,
+                        photos: @js($matchRecord->photo_gallery),
+                        autoplay: false,
+                        init() {
+                            // Auto-play slider
+                            this.autoplay = setInterval(() => {
+                                this.next();
+                            }, 4000);
+                        },
+                        destroy() {
+                            if (this.autoplay) clearInterval(this.autoplay);
+                        },
+                        next() {
+                            this.currentIndex = (this.currentIndex + 1) % this.photos.length;
+                        },
+                        prev() {
+                            this.currentIndex = (this.currentIndex - 1 + this.photos.length) % this.photos.length;
+                        },
+                        goTo(index) {
+                            this.currentIndex = index;
+                        }
+                    }" x-init="init()" @click.away="destroy()">
+                        
+                        <!-- Main Image Display -->
+                        <div class="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 aspect-video">
+                            <img 
+                                :src="photos[currentIndex]"
+                                :alt="'Foto ' + (currentIndex + 1)"
+                                class="w-full h-full object-cover transition-opacity duration-500"
+                            >
+                            
+                            <!-- Navigation Arrows -->
+                            <button 
+                                @click="prev()"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all hover:scale-110 z-10"
+                                aria-label="Imagen anterior"
+                            >
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            
+                            <button 
+                                @click="next()"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all hover:scale-110 z-10"
+                                aria-label="Imagen siguiente"
+                            >
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                            
+                            <!-- Image Counter -->
+                            <div class="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
+                                <span x-text="currentIndex + 1 + ' / ' + photos.length"></span>
+                            </div>
+                            
+                            <!-- Lightbox Button -->
+                            <a 
+                                :href="photos[currentIndex]"
+                                target="_blank"
+                                class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-full shadow-lg transition-all hover:scale-110 z-10 flex items-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                                </svg>
+                                Ver en pantalla completa
                             </a>
-                        @endforeach
+                        </div>
+                        
+                        <!-- Thumbnail Navigation -->
+                        <div class="mt-4 flex gap-2 overflow-x-auto pb-2 px-2" style="scrollbar-width: thin;">
+                            <template x-for="(photo, index) in photos" :key="index">
+                                <button
+                                    @click="goTo(index)"
+                                    :class="currentIndex === index ? 'ring-4 ring-blue-500 scale-105' : 'opacity-70 hover:opacity-100'"
+                                    class="flex-shrink-0 transition-all rounded-lg overflow-hidden border-2"
+                                    :style="'width: ' + (100 / Math.min(photos.length, 5)) + '%; height: 80px;'"
+                                >
+                                    <img 
+                                        :src="photo" 
+                                        :alt="'Miniatura ' + (index + 1)"
+                                        class="w-full h-full object-cover"
+                                    >
+                                </button>
+                            </template>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="mt-3 h-1 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                                class="h-full bg-blue-600 transition-all duration-300"
+                                :style="'width: ' + ((currentIndex + 1) / photos.length * 100) + '%'"
+                            ></div>
+                        </div>
+                        
+                        <!-- Pause/Play Button -->
+                        <div class="mt-3 flex justify-center">
+                            <button 
+                                @click="autoplay ? destroy() : init()"
+                                class="text-gray-600 hover:text-gray-800 transition-colors"
+                                aria-label="Pausar/Reproducir"
+                            >
+                                <template x-if="autoplay">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                                    </svg>
+                                </template>
+                                <template x-if="!autoplay">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </template>
+                            </button>
+                        </div>
                     </div>
                 </div>
             @endif

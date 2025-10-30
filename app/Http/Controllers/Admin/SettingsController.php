@@ -29,13 +29,26 @@ class SettingsController extends Controller
             'primary_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'secondary_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'accent_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'event_gallery' => 'nullable|string',
         ]);
 
         foreach ($validated as $key => $value) {
-            $type = str_contains($key, 'color') ? 'color' : 
-                   (str_contains($key, 'logo') ? 'url' : 'string');
-            
-            SystemSetting::set($key, $value, $type);
+            if ($key === 'event_gallery') {
+                // Process event gallery URLs
+                $urls = array_filter(array_map('trim', explode("\n", $value)));
+                $gallery = [];
+                foreach ($urls as $url) {
+                    if (filter_var($url, FILTER_VALIDATE_URL)) {
+                        $gallery[] = $url;
+                    }
+                }
+                SystemSetting::set($key, json_encode($gallery), 'json');
+            } else {
+                $type = str_contains($key, 'color') ? 'color' : 
+                       (str_contains($key, 'logo') ? 'url' : 'string');
+                
+                SystemSetting::set($key, $value, $type);
+            }
         }
 
         SystemSetting::clearCache();

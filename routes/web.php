@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 // Public Dashboard
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/match/{matchRecord}', [DashboardController::class, 'showMatch'])->name('match.show');
+Route::get('/galeria-fotos', [DashboardController::class, 'photoGallery'])->name('photo-gallery');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {

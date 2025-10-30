@@ -120,6 +120,37 @@
                     </div>
                 </div>
 
+                <!-- Event Gallery -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Galería de Eventos
+                    </h3>
+
+                    <div>
+                        <label for="event_gallery" class="block text-sm font-medium text-gray-700 mb-2">
+                            URLs de Fotos del Evento
+                        </label>
+                        <textarea name="event_gallery" id="event_gallery" rows="6"
+                                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                  placeholder="Ingresa una URL por línea para fotos generales del evento:&#10;https://ejemplo.com/evento1.jpg&#10;https://ejemplo.com/evento2.jpg">@if(isset($settings['event_gallery'])){{ json_decode($settings['event_gallery'], true) ? implode("\n", json_decode($settings['event_gallery'], true)) : '' }}@endif</textarea>
+                        <p class="mt-1 text-sm text-gray-500">Estas fotos aparecerán en la galería pública junto con las fotos de los enfrentamientos</p>
+                        
+                        @if(isset($settings['event_gallery']) && !empty(json_decode($settings['event_gallery'], true)))
+                            <div class="mt-3">
+                                <p class="text-sm text-gray-700 mb-2">Fotos actuales del evento:</p>
+                                <div class="grid grid-cols-3 gap-2">
+                                    @foreach(json_decode($settings['event_gallery'], true) as $photo)
+                                        <img src="{{ $photo }}" alt="Foto del evento" class="h-24 w-full object-cover rounded border">
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Preview -->
                 <div class="border-t pt-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Vista Previa</h3>

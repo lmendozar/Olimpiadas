@@ -94,8 +94,12 @@
                                 </div>
                                 @if($match->competition->is_simultaneous)
                                     <div class="ml-4">
+                                        @php
+                                            $foundAlliance = $match->alliances->find($alliance->id);
+                                            $position = $foundAlliance ? $foundAlliance->pivot->position : null;
+                                        @endphp
                                         <input type="number" name="positions[{{ $loop->index }}]" min="1" placeholder="Pos"
-                                               value="{{ old('positions.' . $loop->index, optional($match->alliances->find($alliance->id))->pivot->position) }}"
+                                               value="{{ old('positions.' . $loop->index, $position) }}"
                                                class="w-16 border border-gray-300 rounded px-2 py-1 text-sm">
                                     </div>
                                 @endif
