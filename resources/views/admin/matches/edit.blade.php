@@ -153,12 +153,12 @@
                         <svg class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        Galería de Fotos del Evento
+                        Galería de Fotos y Videos del Evento
                     </label>
                     <textarea name="photo_urls" id="photo_urls" rows="4"
                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
-                              placeholder="Ingresa una URL por línea:&#10;https://ejemplo.com/foto1.jpg&#10;https://ejemplo.com/foto2.jpg">{{ old('photo_urls', $match->photo_gallery ? implode("\n", $match->photo_gallery) : '') }}</textarea>
-                    <p class="mt-1 text-sm text-gray-500">Opcional. Ingresa una URL de imagen por línea</p>
+                              placeholder="Ingresa una URL por línea:&#10;https://ejemplo.com/foto1.jpg&#10;https://youtube.com/watch?v=VIDEO_ID&#10;https://vimeo.com/VIDEO_ID&#10;https://ejemplo.com/video.mp4">{{ old('photo_urls', $match->photo_gallery ? implode("\n", $match->photo_gallery) : '') }}</textarea>
+                    <p class="mt-1 text-sm text-gray-500">Opcional. Admite imágenes, videos MP4, YouTube y Vimeo - Una URL por línea</p>
                     
                     @if($match->photo_gallery && count($match->photo_gallery) > 0)
                         <div class="mt-3">

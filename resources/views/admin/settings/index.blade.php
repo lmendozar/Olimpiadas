@@ -131,12 +131,12 @@
 
                     <div>
                         <label for="event_gallery" class="block text-sm font-medium text-gray-700 mb-2">
-                            URLs de Fotos del Evento
+                            URLs de Fotos y Videos del Evento
                         </label>
                         <textarea name="event_gallery" id="event_gallery" rows="6"
                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                  placeholder="Ingresa una URL por línea para fotos generales del evento:&#10;https://ejemplo.com/evento1.jpg&#10;https://ejemplo.com/evento2.jpg">@if(isset($settings['event_gallery'])){{ json_decode($settings['event_gallery'], true) ? implode("\n", json_decode($settings['event_gallery'], true)) : '' }}@endif</textarea>
-                        <p class="mt-1 text-sm text-gray-500">Estas fotos aparecerán en la galería pública junto con las fotos de los enfrentamientos</p>
+                                  placeholder="Ingresa una URL por línea:&#10;https://ejemplo.com/evento1.jpg&#10;https://youtube.com/watch?v=VIDEO_ID&#10;https://vimeo.com/VIDEO_ID&#10;https://ejemplo.com/video.mp4">@if(isset($settings['event_gallery'])){{ json_decode($settings['event_gallery'], true) ? implode("\n", json_decode($settings['event_gallery'], true)) : '' }}@endif</textarea>
+                        <p class="mt-1 text-sm text-gray-500">Estas fotos y videos aparecerán en la galería pública. Admite imágenes, videos MP4, YouTube y Vimeo</p>
                         
                         @if(isset($settings['event_gallery']) && !empty(json_decode($settings['event_gallery'], true)))
                             <div class="mt-3">

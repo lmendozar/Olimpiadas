@@ -15,8 +15,8 @@
 
     <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
         <div class="px-6 py-4 bg-blue-600">
-            <h1 class="text-3xl font-bold text-white">📸 Galería de Fotos de Olimpiadas</h1>
-            <p class="text-blue-100 mt-2">Todas las imágenes de los enfrentamientos deportivos</p>
+            <h1 class="text-3xl font-bold text-white">📸🎥 Galería de Fotos y Videos de Olimpiadas</h1>
+            <p class="text-blue-100 mt-2">Imágenes y videos de los enfrentamientos deportivos</p>
         </div>
     </div>
 
@@ -98,17 +98,66 @@
              }"
              x-init="init()">
             
-            <!-- Main Image Display -->
+            <!-- Main Media Display -->
             <div class="relative bg-gray-900 aspect-video">
-                <img 
-                    :src="items[currentIndex].photo"
-                    :alt="items[currentIndex].game_type"
-                    class="w-full h-full object-cover"
-                >
+                <!-- Image -->
+                <template x-if="items[currentIndex].type === 'image'">
+                    <img 
+                        :src="items[currentIndex].media"
+                        :alt="items[currentIndex].game_type"
+                        class="w-full h-full object-cover"
+                    >
+                </template>
+                
+                <!-- Video -->
+                <template x-if="items[currentIndex].type === 'video'">
+                    <video 
+                        :src="items[currentIndex].media"
+                        controls
+                        class="w-full h-full"
+                    ></video>
+                </template>
+                
+                <!-- YouTube -->
+                <template x-if="items[currentIndex].type === 'youtube'">
+                    <iframe 
+                        :src="'https://www.youtube.com/embed/' + items[currentIndex].media.split(/[\/=]/).pop().split('&')[0]"
+                        class="w-full h-full"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                    ></iframe>
+                </template>
+                
+                <!-- Vimeo -->
+                <template x-if="items[currentIndex].type === 'vimeo'">
+                    <iframe 
+                        :src="'https://player.vimeo.com/video/' + items[currentIndex].media.match(/\/(\d+)/)[1]"
+                        class="w-full h-full"
+                        frameborder="0"
+                        allow="autoplay; fullscreen; picture-in-picture"
+                        allowfullscreen
+                    ></iframe>
+                </template>
 
-                <!-- Image Counter -->
+                <!-- Media Counter -->
                 <div class="absolute top-4 right-4 bg-black/70 text-white px-4 py-2 rounded-full text-sm font-medium">
                     <span x-text="(currentIndex + 1) + ' / ' + items.length"></span>
+                </div>
+                
+                <!-- Media Type Badge -->
+                <div class="absolute top-4 left-4 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                    <template x-if="items[currentIndex].type === 'image'">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </template>
+                    <template x-if="items[currentIndex].type === 'video' || items[currentIndex].type === 'youtube' || items[currentIndex].type === 'vimeo'">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                    </template>
+                    <span x-text="items[currentIndex].type === 'image' ? 'Imagen' : items[currentIndex].type === 'video' ? 'Video' : items[currentIndex].type === 'youtube' ? 'YouTube' : 'Vimeo'"></span>
                 </div>
 
                 <!-- Navigation Arrows -->
@@ -259,11 +308,43 @@
                             class="flex-shrink-0 transition-all rounded-lg overflow-hidden border-2 relative"
                             style="width: 120px; height: 80px;"
                         >
-                            <img 
-                                :src="item.photo" 
-                                :alt="item.game_type"
-                                class="w-full h-full object-cover"
-                            >
+                            <!-- Image thumbnail -->
+                            <template x-if="item.type === 'image'">
+                                <img 
+                                    :src="item.media" 
+                                    :alt="item.game_type"
+                                    class="w-full h-full object-cover"
+                                >
+                            </template>
+                            
+                            <!-- Video thumbnail -->
+                            <template x-if="item.type === 'video'">
+                                <div class="w-full h-full bg-gray-800 relative">
+                                    <img 
+                                        :src="item.media" 
+                                        :alt="item.game_type"
+                                        class="w-full h-full object-cover opacity-50"
+                                    >
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <!-- YouTube/Vimeo thumbnail -->
+                            <template x-if="item.type === 'youtube' || item.type === 'vimeo'">
+                                <div class="w-full h-full bg-gray-800 relative">
+                                    <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-red-600 to-blue-600">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="absolute top-1 right-1 bg-black/70 text-white px-1.5 py-0.5 rounded text-xs font-medium" x-text="item.type === 'youtube' ? 'YT' : 'VM'"></div>
+                                </div>
+                            </template>
+                            
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity">
                                 <p class="absolute bottom-1 left-1 right-1 text-white text-xs font-medium truncate" x-text="item.game_type"></p>
                             </div>
@@ -281,7 +362,7 @@
 
                 <!-- Keyboard Shortcuts Help -->
                 <div class="mt-4 text-center text-xs text-gray-500">
-                    <p>💡 Usa las flechas ← → del teclado para navegar, o desliza en móvil</p>
+                    <p>💡 Usa las flechas ← → del teclado para navegar, o desliza en móvil | Admite videos de YouTube, Vimeo y archivos MP4</p>
                 </div>
             </div>
         </div>

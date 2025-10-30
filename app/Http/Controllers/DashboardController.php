@@ -71,9 +71,10 @@ class DashboardController extends Controller
         // Prepare gallery items with all photos and their match info
         $galleryItems = [];
         foreach ($matches as $match) {
-            foreach ($match->photo_gallery as $photo) {
+            foreach ($match->photo_gallery as $item) {
                 $galleryItems[] = [
-                    'photo' => $photo,
+                    'media' => $item,
+                    'type' => $this->detectMediaType($item),
                     'match_date' => $match->match_date->format('d/m/Y H:i'),
                     'game_type' => $match->competition->gameType->name,
                     'result' => $match->result_metric ?? 'Sin resultado',
@@ -87,9 +88,10 @@ class DashboardController extends Controller
         $eventGallery = \App\Models\SystemSetting::where('key', 'event_gallery')->first();
         if ($eventGallery) {
             $eventPhotos = json_decode($eventGallery->value, true) ?? [];
-            foreach ($eventPhotos as $photo) {
+            foreach ($eventPhotos as $item) {
                 $galleryItems[] = [
-                    'photo' => $photo,
+                    'media' => $item,
+                    'type' => $this->detectMediaType($item),
                     'match_date' => 'Evento',
                     'game_type' => 'Eventos de las Olimpiadas',
                     'result' => 'General',
@@ -103,6 +105,35 @@ class DashboardController extends Controller
         shuffle($galleryItems);
 
         return view('photo-gallery', compact('galleryItems'));
+    }
+
+    /**
+     * Detect media type (image or video) from URL
+     */
+    private function detectMediaType($url): string
+    {
+        // Video extensions
+        $videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
+        
+        // YouTube patterns
+        if (preg_match('/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/', $url, $matches) ||
+            preg_match('/youtu\.be\/([a-zA-Z0-9_-]+)/', $url, $matches)) {
+            return 'youtube';
+        }
+        
+        // Vimeo patterns
+        if (preg_match('/vimeo\.com\/(\d+)/', $url, $matches)) {
+            return 'vimeo';
+        }
+        
+        // Check file extension
+        $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+        
+        if (in_array($extension, $videoExtensions)) {
+            return 'video';
+        }
+        
+        return 'image';
     }
 }
 
