@@ -109,43 +109,115 @@
                 </div>
             @endif
 
-            <!-- Photo Gallery Slider -->
+            <!-- Photo/Video Gallery Slider -->
             @if($matchRecord->photo_gallery && count($matchRecord->photo_gallery) > 0)
                 <div class="mb-6 border-t pt-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">📸 Galería de Fotos</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">📸 Galería de Fotos y Videos</h2>
                     
                     <!-- Slider Container -->
                     <div class="relative" x-data="{
                         currentIndex: 0,
-                        photos: @js($matchRecord->photo_gallery),
+                        rawUrls: @js($matchRecord->photo_gallery),
+                        slides: [],
                         autoplay: false,
-                        init() {
-                            // Auto-play slider
+                        // Helpers
+                        isYouTube(u){ return /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)/i.test(u) },
+                        isVimeo(u){ return /vimeo\.com\/(?:\d+|.*\/\d+)/i.test(u) },
+                        isMp4(u){ return /\.(mp4)(?:\?|$)/i.test(u) },
+                        ytId(u){
+                            try {
+                                const url = new URL(u);
+                                if (url.hostname.includes('youtu.be')) return url.pathname.slice(1);
+                                if (url.searchParams.get('v')) return url.searchParams.get('v');
+                                const parts = url.pathname.split('/');
+                                const idx = parts.indexOf('embed');
+                                if (idx > -1 && parts[idx+1]) return parts[idx+1];
+                            } catch(e) {}
+                            return null;
+                        },
+                        vimeoId(u){
+                            try {
+                                const url = new URL(u);
+                                // Assume last numeric path segment
+                                const parts = url.pathname.split('/').filter(Boolean);
+                                for (let i = parts.length - 1; i >= 0; i--) {
+                                    if (/^\d+$/.test(parts[i])) return parts[i];
+                                }
+                            } catch(e) {}
+                            return null;
+                        },
+                        buildSlides(){
+                            this.slides = this.rawUrls.map(u => {
+                                let type = 'image', embedUrl = null, thumbUrl = null;
+                                if (this.isYouTube(u)) {
+                                    type = 'youtube';
+                                    const id = this.ytId(u);
+                                    embedUrl = id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+                                    thumbUrl = id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+                                } else if (this.isVimeo(u)) {
+                                    type = 'vimeo';
+                                    const id = this.vimeoId(u);
+                                    embedUrl = id ? `https://player.vimeo.com/video/${id}` : null;
+                                    thumbUrl = null; // Placeholder handled in template
+                                } else if (this.isMp4(u)) {
+                                    type = 'mp4';
+                                    embedUrl = u;
+                                    thumbUrl = null; // Placeholder handled in template
+                                } else {
+                                    type = 'image';
+                                }
+                                return { url: u, type, embedUrl, thumbUrl };
+                            });
+                        },
+                        init(){
+                            this.buildSlides();
+                            // Auto-play slider for images only to avoid unwanted video playback
                             this.autoplay = setInterval(() => {
                                 this.next();
-                            }, 4000);
+                            }, 5000);
                         },
-                        destroy() {
-                            if (this.autoplay) clearInterval(this.autoplay);
-                        },
-                        next() {
-                            this.currentIndex = (this.currentIndex + 1) % this.photos.length;
-                        },
-                        prev() {
-                            this.currentIndex = (this.currentIndex - 1 + this.photos.length) % this.photos.length;
-                        },
-                        goTo(index) {
-                            this.currentIndex = index;
-                        }
+                        destroy(){ if (this.autoplay) clearInterval(this.autoplay); },
+                        next(){ this.currentIndex = (this.currentIndex + 1) % this.slides.length; },
+                        prev(){ this.currentIndex = (this.currentIndex - 1 + this.slides.length) % this.slides.length; },
+                        goTo(i){ this.currentIndex = i; }
                     }" x-init="init()" @click.away="destroy()">
                         
                         <!-- Main Image Display -->
                         <div class="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 aspect-video">
-                            <img 
-                                :src="photos[currentIndex]"
-                                :alt="'Foto ' + (currentIndex + 1)"
-                                class="w-full h-full object-cover transition-opacity duration-500"
-                            >
+                            <!-- Image -->
+                            <template x-if="slides[currentIndex] && slides[currentIndex].type === 'image'">
+                                <img :src="slides[currentIndex].url" :alt="'Foto ' + (currentIndex + 1)" class="w-full h-full object-cover">
+                            </template>
+
+                            <!-- YouTube -->
+                            <template x-if="slides[currentIndex] && slides[currentIndex].type === 'youtube'">
+                                <iframe
+                                    class="w-full h-full"
+                                    :src="slides[currentIndex].embedUrl"
+                                    title="YouTube video player"
+                                    frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowfullscreen
+                                ></iframe>
+                            </template>
+
+                            <!-- Vimeo -->
+                            <template x-if="slides[currentIndex] && slides[currentIndex].type === 'vimeo'">
+                                <iframe
+                                    class="w-full h-full"
+                                    :src="slides[currentIndex].embedUrl"
+                                    frameborder="0"
+                                    allow="autoplay; fullscreen; picture-in-picture"
+                                    allowfullscreen
+                                ></iframe>
+                            </template>
+
+                            <!-- MP4 -->
+                            <template x-if="slides[currentIndex] && slides[currentIndex].type === 'mp4'">
+                                <video class="w-full h-full object-cover" controls preload="metadata">
+                                    <source :src="slides[currentIndex].url" type="video/mp4">
+                                </video>
+                            </template>
                             
                             <!-- Navigation Arrows -->
                             <button 
@@ -170,12 +242,12 @@
                             
                             <!-- Image Counter -->
                             <div class="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
-                                <span x-text="currentIndex + 1 + ' / ' + photos.length"></span>
+                                <span x-text="currentIndex + 1 + ' / ' + slides.length"></span>
                             </div>
                             
                             <!-- Lightbox Button -->
                             <a 
-                                :href="photos[currentIndex]"
+                                :href="slides[currentIndex] ? slides[currentIndex].url : '#'"
                                 target="_blank"
                                 class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-full shadow-lg transition-all hover:scale-110 z-10 flex items-center gap-2"
                             >
@@ -188,18 +260,27 @@
                         
                         <!-- Thumbnail Navigation -->
                         <div class="mt-4 flex gap-2 overflow-x-auto pb-2 px-2" style="scrollbar-width: thin;">
-                            <template x-for="(photo, index) in photos" :key="index">
-                                <button
-                                    @click="goTo(index)"
-                                    :class="currentIndex === index ? 'ring-4 ring-blue-500 scale-105' : 'opacity-70 hover:opacity-100'"
-                                    class="flex-shrink-0 transition-all rounded-lg overflow-hidden border-2"
-                                    :style="'width: ' + (100 / Math.min(photos.length, 5)) + '%; height: 80px;'"
-                                >
-                                    <img 
-                                        :src="photo" 
-                                        :alt="'Miniatura ' + (index + 1)"
-                                        class="w-full h-full object-cover"
-                                    >
+                            <template x-for="(slide, index) in slides" :key="index">
+                                <button @click="goTo(index)" :class="currentIndex === index ? 'ring-4 ring-blue-500 scale-105' : 'opacity-70 hover:opacity-100'" class="flex-shrink-0 transition-all rounded-lg overflow-hidden border-2" :style="'width: ' + (100 / Math.min(slides.length, 5)) + '%; height: 80px;'">
+                                    <!-- Image thumb -->
+                                    <template x-if="slide.type === 'image'">
+                                        <img :src="slide.url" :alt="'Miniatura ' + (index + 1)" class="w-full h-full object-cover">
+                                    </template>
+                                    <!-- YouTube thumb -->
+                                    <template x-if="slide.type === 'youtube'">
+                                        <div class="relative w-full h-full">
+                                            <img :src="slide.thumbUrl" alt="YouTube thumbnail" class="w-full h-full object-cover">
+                                            <div class="absolute inset-0 bg-black/25 grid place-items-center">
+                                                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <!-- Vimeo/MP4 placeholder thumb -->
+                                    <template x-if="slide.type === 'vimeo' || slide.type === 'mp4'">
+                                        <div class="w-full h-full bg-gray-200 grid place-items-center text-gray-700">
+                                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        </div>
+                                    </template>
                                 </button>
                             </template>
                         </div>
@@ -208,7 +289,7 @@
                         <div class="mt-3 h-1 bg-gray-200 rounded-full overflow-hidden">
                             <div 
                                 class="h-full bg-blue-600 transition-all duration-300"
-                                :style="'width: ' + ((currentIndex + 1) / photos.length * 100) + '%'"
+                                :style="'width: ' + ((currentIndex + 1) / slides.length * 100) + '%'"
                             ></div>
                         </div>
                         

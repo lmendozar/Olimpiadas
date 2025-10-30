@@ -11,6 +11,37 @@ use Illuminate\Http\Request;
 class MatchController extends Controller
 {
     /**
+     * Normaliza y valida una cadena de URLs (una por línea) y retorna array.
+     */
+    private function parsePhotoUrls(?string $photoUrls): array
+    {
+        if (!$photoUrls) {
+            return [];
+        }
+
+        $rawLines = preg_split("/\r\n|\r|\n/", $photoUrls);
+        $normalized = [];
+
+        foreach ($rawLines as $line) {
+            $url = trim($line, " \t\n\r\0\x0B\"'()");
+            if ($url === '') {
+                continue;
+            }
+
+            // Agrega esquema si falta
+            if (!preg_match('/^https?:\/\//i', $url)) {
+                $url = 'https://' . $url;
+            }
+
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
+                $normalized[] = $url;
+            }
+        }
+
+        return $normalized;
+    }
+
+    /**
      * Display a listing of matches
      */
     public function index()
@@ -47,16 +78,8 @@ class MatchController extends Controller
             'photo_urls' => 'nullable|string',
         ]);
 
-        // Process photo gallery
-        $photos = [];
-        if ($request->filled('photo_urls')) {
-            $urls = array_filter(array_map('trim', explode("\n", $validated['photo_urls'])));
-            foreach ($urls as $url) {
-                if (filter_var($url, FILTER_VALIDATE_URL)) {
-                    $photos[] = $url;
-                }
-            }
-        }
+        // Procesar galería de fotos (normaliza y valida)
+        $photos = $this->parsePhotoUrls($validated['photo_urls'] ?? null);
 
         $match = MatchPlay::create([
             'competition_id' => $validated['competition_id'],
@@ -115,24 +138,23 @@ class MatchController extends Controller
             'photo_urls' => 'nullable|string',
         ]);
 
-        // Process photo gallery
-        $photos = [];
-        if ($request->filled('photo_urls')) {
-            $urls = array_filter(array_map('trim', explode("\n", $validated['photo_urls'])));
-            foreach ($urls as $url) {
-                if (filter_var($url, FILTER_VALIDATE_URL)) {
-                    $photos[] = $url;
-                }
-            }
-        }
+        // Procesar galería de fotos (normaliza y valida)
+        $photos = $this->parsePhotoUrls($validated['photo_urls'] ?? null);
 
-        $match->update([
+        $updateData = [
             'competition_id' => $validated['competition_id'],
             'match_date' => $validated['match_date'],
             'result_metric' => $validated['result_metric'],
             'winner_id' => $validated['winner_id'],
-            'photo_gallery' => !empty($photos) ? $photos : null,
-        ]);
+        ];
+
+        // Solo actualizar la galería si el campo fue enviado en el formulario
+        if ($request->has('photo_urls')) {
+            // Si el textarea está vacío, limpiar galería; si no, usar las URLs válidas
+            $updateData['photo_gallery'] = !empty($photos) ? $photos : null;
+        }
+
+        $match->update($updateData);
 
         // Sync alliances with positions (for simultaneous competitions)
         $syncData = [];
