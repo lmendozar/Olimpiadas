@@ -116,6 +116,14 @@
                                         <p class="text-sm text-green-600 mt-1">🏆 Ganador: <span
                                                 class="font-semibold">{{ $match->winner->name }}</span></p>
                                     @endif
+                                    @if($match->photo_gallery && count($match->photo_gallery) > 0)
+                                        <div class="mt-3 flex gap-2">
+                                            @foreach(collect($match->photo_gallery)->take(3) as $photo)
+                                                <img src="{{ $photo }}" alt="Miniatura"
+                                                     class="w-12 h-12 rounded-md object-cover border border-gray-200">
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
                                 <a href="{{ route('match.show', $match) }}" class="ml-4 text-blue-600 hover:text-blue-800">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -148,6 +156,14 @@
                                     <div class="mt-2 text-sm text-gray-700">
                                         {{ $match->alliances->pluck('name')->join(' vs ') }}
                                     </div>
+                                    @if($match->photo_gallery && count($match->photo_gallery) > 0)
+                                        <div class="mt-3 flex gap-2">
+                                            @foreach(collect($match->photo_gallery)->take(3) as $photo)
+                                                <img src="{{ $photo }}" alt="Miniatura"
+                                                     class="w-12 h-12 rounded-md object-cover border border-gray-200">
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
                                 <a href="{{ route('match.show', $match) }}" class="ml-4 text-blue-600 hover:text-blue-800">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
