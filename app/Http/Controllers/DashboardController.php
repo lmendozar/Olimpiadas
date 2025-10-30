@@ -99,6 +99,7 @@ class DashboardController extends Controller
                     'result' => $match->result_metric ?? 'Sin resultado',
                     'alliances' => $match->alliances->pluck('name')->join(' vs '),
                     'match_id' => $match->id,
+                    'match_timestamp' => $match->match_date->timestamp, // Add timestamp for sorting
                 ];
             }
         }
@@ -116,25 +117,39 @@ class DashboardController extends Controller
                     'result' => 'General',
                     'alliances' => 'Todos los participantes',
                     'match_id' => null,
+                    'match_timestamp' => null, // Event photos have no match timestamp
                 ];
             }
         }
 
-        // Sort by filename datetime (format: yyyyMMdd HHmmss_xxxxx.ext)
+        // Sort by filename datetime globally (format: yyyyMMdd HHmmss_xxxxx.ext)
         usort($galleryItems, function($a, $b) {
             $dateA = $this->extractDateTimeFromFilename($a['media']);
             $dateB = $this->extractDateTimeFromFilename($b['media']);
             
-            // If both have valid dates, compare them
+            // If both have valid dates from filename, compare them
             if ($dateA && $dateB) {
                 return $dateB <=> $dateA; // Descending order (newest first)
             }
             
-            // If only one has a date, prioritize it
+            // If only one has a date from filename, prioritize it
             if ($dateA && !$dateB) return -1;
             if (!$dateA && $dateB) return 1;
             
-            // If neither has a date, keep original order
+            // If neither has a date in filename, fall back to match date timestamp
+            if (!$dateA && !$dateB) {
+                $matchDateA = $a['match_timestamp'] ?? null;
+                $matchDateB = $b['match_timestamp'] ?? null;
+                
+                if ($matchDateA && $matchDateB) {
+                    return $matchDateB <=> $matchDateA; // Descending order
+                }
+                
+                // If only one has match timestamp, prioritize it
+                if ($matchDateA && !$matchDateB) return -1;
+                if (!$matchDateA && $matchDateB) return 1;
+            }
+            
             return 0;
         });
 
