@@ -26,26 +26,48 @@
              x-data="{
                 currentIndex: 0,
                 items: @js($galleryItems),
-                autoplay: false,
                 init() {
-                    // Auto-play slider
-                    this.autoplay = setInterval(() => {
-                        this.next();
-                    }, 5000);
-                },
-                destroy() {
-                    if (this.autoplay) clearInterval(this.autoplay);
-                },
-                next() {
-                    this.currentIndex = (this.currentIndex + 1) % this.items.length;
-                },
-                prev() {
-                    this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length;
-                },
-                goTo(index) {
-                    this.currentIndex = index;
+                    // Keyboard navigation
+                    window.addEventListener('keydown', (e) => {
+                        if (e.key === 'ArrowLeft') {
+                            this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length;
+                        } else if (e.key === 'ArrowRight') {
+                            this.currentIndex = (this.currentIndex + 1) % this.items.length;
+                        } else if (e.key === 'Home') {
+                            this.currentIndex = 0;
+                        } else if (e.key === 'End') {
+                            this.currentIndex = this.items.length - 1;
+                        }
+                    });
+                    
+                    // Touch/swipe support
+                    let startX = 0;
+                    let startY = 0;
+                    
+                    window.addEventListener('touchstart', (e) => {
+                        startX = e.touches[0].clientX;
+                        startY = e.touches[0].clientY;
+                    });
+                    
+                    window.addEventListener('touchend', (e) => {
+                        let endX = e.changedTouches[0].clientX;
+                        let endY = e.changedTouches[0].clientY;
+                        let diffX = startX - endX;
+                        let diffY = startY - endY;
+                        
+                        // Check if horizontal swipe is greater than vertical
+                        if (Math.abs(diffX) > Math.abs(diffY)) {
+                            if (diffX > 50) {
+                                // Swipe left
+                                this.currentIndex = (this.currentIndex + 1) % this.items.length;
+                            } else if (diffX < -50) {
+                                // Swipe right
+                                this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length;
+                            }
+                        }
+                    });
                 }
-             }" 
+             }"
              x-init="init()">
             
             <!-- Main Image Display -->
@@ -63,7 +85,7 @@
 
                 <!-- Navigation Arrows -->
                 <button 
-                    @click="prev()"
+                    @click="currentIndex = (currentIndex - 1 + items.length) % items.length"
                     class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-4 rounded-full shadow-lg transition-all hover:scale-110"
                     aria-label="Imagen anterior"
                 >
@@ -73,7 +95,7 @@
                 </button>
                 
                 <button 
-                    @click="next()"
+                    @click="currentIndex = (currentIndex + 1) % items.length"
                     class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-4 rounded-full shadow-lg transition-all hover:scale-110"
                     aria-label="Imagen siguiente"
                 >
@@ -140,12 +162,71 @@
                 </div>
             </div>
 
-            <!-- Thumbnail Strip -->
+            <!-- Thumbnail Strip with Controls -->
             <div class="p-6 bg-gray-100">
+                <!-- Controls Above Thumbnails -->
+                <div class="mb-4 flex flex-wrap justify-center gap-3">
+                    <button 
+                        @click="currentIndex = 0"
+                        :disabled="currentIndex === 0"
+                        :class="currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50'"
+                        class="bg-white border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 px-4 py-2 rounded-lg transition-all flex items-center gap-2 font-medium"
+                        aria-label="Primera imagen"
+                    >
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
+                        <span class="text-sm">Primera</span>
+                    </button>
+
+                    <button 
+                        @click="currentIndex = (currentIndex - 1 + items.length) % items.length"
+                        :disabled="currentIndex === 0"
+                        :class="currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50'"
+                        class="bg-white border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 px-4 py-2 rounded-lg transition-all flex items-center gap-2 font-medium"
+                        aria-label="Anterior"
+                    >
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        <span class="text-sm">Anterior</span>
+                    </button>
+
+                    <div class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">
+                        <span x-text="(currentIndex + 1) + ' / ' + items.length"></span>
+                    </div>
+
+                    <button 
+                        @click="currentIndex = (currentIndex + 1) % items.length"
+                        :disabled="currentIndex === items.length - 1"
+                        :class="currentIndex === items.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50'"
+                        class="bg-white border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 px-4 py-2 rounded-lg transition-all flex items-center gap-2 font-medium"
+                        aria-label="Siguiente"
+                    >
+                        <span class="text-sm">Siguiente</span>
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <button 
+                        @click="currentIndex = items.length - 1"
+                        :disabled="currentIndex === items.length - 1"
+                        :class="currentIndex === items.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50'"
+                        class="bg-white border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 px-4 py-2 rounded-lg transition-all flex items-center gap-2 font-medium"
+                        aria-label="Última imagen"
+                    >
+                        <span class="text-sm">Última</span>
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+
                 <div class="flex gap-2 overflow-x-auto pb-2" style="scrollbar-width: thin;">
                     <template x-for="(item, index) in items" :key="index">
                         <button
-                            @click="goTo(index)"
+                            @click="currentIndex = index"
                             :class="currentIndex === index ? 'ring-4 ring-blue-500 scale-105' : 'opacity-70 hover:opacity-100'"
                             class="flex-shrink-0 transition-all rounded-lg overflow-hidden border-2 relative"
                             style="width: 120px; height: 80px;"
@@ -170,41 +251,9 @@
                     ></div>
                 </div>
 
-                <!-- Controls -->
-                <div class="mt-4 flex justify-center gap-4">
-                    <button 
-                        @click="autoplay ? destroy() : init()"
-                        class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2"
-                        aria-label="Pausar/Reproducir"
-                    >
-                        <template x-if="autoplay">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-                                </svg>
-                                <span class="text-sm font-medium">Pausar</span>
-                            </div>
-                        </template>
-                        <template x-if="!autoplay">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z"/>
-                                </svg>
-                                <span class="text-sm font-medium">Reproducir</span>
-                            </div>
-                        </template>
-                    </button>
-
-                    <button 
-                        @click="destroy(); currentIndex = 0"
-                        class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2"
-                        aria-label="Reiniciar"
-                    >
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        <span class="text-sm font-medium">Reiniciar</span>
-                    </button>
+                <!-- Keyboard Shortcuts Help -->
+                <div class="mt-4 text-center text-xs text-gray-500">
+                    <p>💡 Usa las flechas ← → del teclado para navegar, o desliza en móvil</p>
                 </div>
             </div>
         </div>
