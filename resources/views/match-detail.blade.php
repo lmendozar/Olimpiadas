@@ -119,7 +119,6 @@
                         currentIndex: 0,
                         rawUrls: @js($matchRecord->photo_gallery),
                         slides: [],
-                        autoplay: false,
                         // Helpers
                         isYouTube(u){ return /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)/i.test(u) },
                         isVimeo(u){ return /vimeo\.com\/(?:\d+|.*\/\d+)/i.test(u) },
@@ -171,16 +170,24 @@
                         },
                         init(){
                             this.buildSlides();
-                            // Auto-play slider for images only to avoid unwanted video playback
-                            this.autoplay = setInterval(() => {
-                                this.next();
-                            }, 5000);
                         },
-                        destroy(){ if (this.autoplay) clearInterval(this.autoplay); },
                         next(){ this.currentIndex = (this.currentIndex + 1) % this.slides.length; },
                         prev(){ this.currentIndex = (this.currentIndex - 1 + this.slides.length) % this.slides.length; },
-                        goTo(i){ this.currentIndex = i; }
-                    }" x-init="init()" @click.away="destroy()">
+                        goTo(i){ this.currentIndex = i; },
+                        handleKeydown(event){
+                            // Solo procesar si no estamos en un input o textarea
+                            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+                                return;
+                            }
+                            if (event.key === 'ArrowLeft') {
+                                event.preventDefault();
+                                this.prev();
+                            } else if (event.key === 'ArrowRight') {
+                                event.preventDefault();
+                                this.next();
+                            }
+                        }
+                    }" x-init="init()" @keydown.window="handleKeydown($event)">
                         
                         <!-- Main Image Display -->
                         <div class="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 aspect-video">
@@ -291,26 +298,6 @@
                                 class="h-full bg-blue-600 transition-all duration-300"
                                 :style="'width: ' + ((currentIndex + 1) / slides.length * 100) + '%'"
                             ></div>
-                        </div>
-                        
-                        <!-- Pause/Play Button -->
-                        <div class="mt-3 flex justify-center">
-                            <button 
-                                @click="autoplay ? destroy() : init()"
-                                class="text-gray-600 hover:text-gray-800 transition-colors"
-                                aria-label="Pausar/Reproducir"
-                            >
-                                <template x-if="autoplay">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-                                    </svg>
-                                </template>
-                                <template x-if="!autoplay">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M8 5v14l11-7z"/>
-                                    </svg>
-                                </template>
-                            </button>
                         </div>
                     </div>
                 </div>
