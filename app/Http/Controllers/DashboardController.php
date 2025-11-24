@@ -43,7 +43,26 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        return view('dashboard', compact('rankings', 'recentMatches', 'upcomingMatches'));
+        // Get winning alliance (first in rankings)
+        $winningAlliance = $rankings->isNotEmpty() ? $rankings->first() : null;
+
+        // Get closing celebration settings
+        $closingCelebrationText = \App\Models\SystemSetting::get('closing_celebration_text', '');
+        $closingCelebrationImages = \App\Models\SystemSetting::get('closing_celebration_images', '[]');
+        $closingBannerImage = \App\Models\SystemSetting::get('closing_banner_image', '');
+
+        // Parse celebration images JSON
+        $celebrationImages = json_decode($closingCelebrationImages, true) ?? [];
+
+        return view('dashboard', compact(
+            'rankings', 
+            'recentMatches', 
+            'upcomingMatches',
+            'winningAlliance',
+            'closingCelebrationText',
+            'celebrationImages',
+            'closingBannerImage'
+        ));
     }
 
     /**

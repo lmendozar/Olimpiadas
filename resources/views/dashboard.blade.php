@@ -9,6 +9,69 @@
             <h1 class="text-3xl font-bold text-gray-900">Dashboard de Olimpiadas</h1>
             <p class="mt-2 text-gray-600">Clasificación general y resultados de competencias</p>
         </div>
+
+        <!-- Closing Celebration Section -->
+        @if(!empty($closingCelebrationText))
+            <div class="mb-8 space-y-6">
+                <!-- First Row: Winning Alliance -->
+                @if($winningAlliance)
+                    <div class="bg-white shadow-xl rounded-lg overflow-hidden border-2" style="border-color: {{ $systemSettings['secondary_color'] ?? '#059669' }};">
+                        <div class="px-8 py-6">
+                            <div class="flex items-center justify-center space-x-6">
+                                <div class="text-center">
+                                    <h2 class="text-2xl font-bold mb-4" style="color: {{ $systemSettings['secondary_color'] ?? '#059669' }};">🏆 ¡Olimpiadas Finalizadas! 🏆</h2>
+                                    <h3 class="text-xl font-semibold mb-2" style="color: {{ $systemSettings['secondary_color'] ?? '#059669' }};">Alianza Ganadora</h3>
+                                </div>
+                                @if($winningAlliance['alliance']->logo_url)
+                                    <img class="h-24 w-24 rounded-full border-4 shadow-lg" 
+                                         style="border-color: {{ $systemSettings['secondary_color'] ?? '#059669' }};"
+                                         src="{{ $winningAlliance['alliance']->logo_url }}" 
+                                         alt="{{ $winningAlliance['alliance']->name }}">
+                                @endif
+                                <div class="text-center">
+                                    <p class="text-3xl font-bold" style="color: {{ $systemSettings['secondary_color'] ?? '#059669' }};">{{ $winningAlliance['alliance']->name }}</p>
+                                    <p class="text-xl font-semibold mt-2" style="color: {{ $systemSettings['secondary_color'] ?? '#059669' }};">
+                                        Puntaje Final: <span class="text-2xl">{{ $winningAlliance['total_points'] }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Second Row: Celebration Text with Images -->
+                @if($closingCelebrationText)
+                    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                        <div class="px-6 py-6">
+                            <div class="flex flex-col md:flex-row items-center gap-6">
+                                <div class="flex-1">
+                                    <p class="text-lg italic text-gray-700 text-center md:text-left">{{ $closingCelebrationText }}</p>
+                                </div>
+                                @if(!empty($celebrationImages))
+                                    <div class="flex gap-3 flex-wrap justify-center">
+                                        @foreach($celebrationImages as $image)
+                                            <img src="{{ $image }}" 
+                                                 alt="Celebración" 
+                                                 class="h-20 w-20 md:h-24 md:w-24 rounded-lg object-cover border-2 border-gray-200 shadow-md">
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Third Row: Full Width Banner Image -->
+                @if($closingBannerImage)
+                    <div class="w-full">
+                        <img src="{{ $closingBannerImage }}" 
+                             alt="Banner de Cierre" 
+                             class="w-full h-auto rounded-lg shadow-lg object-cover">
+                    </div>
+                @endif
+            </div>
+        @endif
+
         <div class="grid grid-cols-4 gap-8">
 
             <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-8">

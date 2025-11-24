@@ -30,12 +30,15 @@ class SettingsController extends Controller
             'secondary_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'accent_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'event_gallery' => 'nullable|string',
+            'closing_celebration_text' => 'nullable|string|max:1000',
+            'closing_celebration_images' => 'nullable|string',
+            'closing_banner_image' => 'nullable|url|max:500',
         ]);
 
         foreach ($validated as $key => $value) {
-            if ($key === 'event_gallery') {
-                // Process event gallery URLs
-                $urls = array_filter(array_map('trim', explode("\n", $value)));
+            if ($key === 'event_gallery' || $key === 'closing_celebration_images') {
+                // Process gallery URLs
+                $urls = array_filter(array_map('trim', explode("\n", $value ?? '')));
                 $gallery = [];
                 foreach ($urls as $url) {
                     if (filter_var($url, FILTER_VALIDATE_URL)) {
@@ -45,7 +48,7 @@ class SettingsController extends Controller
                 SystemSetting::set($key, json_encode($gallery), 'json');
             } else {
                 $type = str_contains($key, 'color') ? 'color' : 
-                       (str_contains($key, 'logo') ? 'url' : 'string');
+                       (str_contains($key, 'logo') || str_contains($key, 'banner_image') ? 'url' : 'string');
                 
                 SystemSetting::set($key, $value, $type);
             }

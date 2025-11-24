@@ -151,6 +151,69 @@
                     </div>
                 </div>
 
+                <!-- Closing Celebration Settings -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                        Sección de Cierre de Olimpiadas
+                    </h3>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label for="closing_celebration_text" class="block text-sm font-medium text-gray-700 mb-2">
+                                Texto de Celebración
+                            </label>
+                            <textarea name="closing_celebration_text" id="closing_celebration_text" rows="3"
+                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                      placeholder="Ingresa un mensaje de celebración que aparecerá en cursiva...">{{ old('closing_celebration_text', $settings['closing_celebration_text'] ?? '') }}</textarea>
+                            <p class="mt-1 text-sm text-gray-500">Este texto aparecerá en cursiva junto con imágenes de celebración. Si está vacío, la sección no se mostrará.</p>
+                        </div>
+
+                        <div>
+                            <label for="closing_celebration_images" class="block text-sm font-medium text-gray-700 mb-2">
+                                URLs de Imágenes de Celebración
+                            </label>
+                            <textarea name="closing_celebration_images" id="closing_celebration_images" rows="4"
+                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                      placeholder="Ingresa una URL por línea:&#10;https://ejemplo.com/celebracion1.jpg&#10;https://ejemplo.com/celebracion2.jpg">@if(isset($settings['closing_celebration_images'])){{ json_decode($settings['closing_celebration_images'], true) ? implode("\n", json_decode($settings['closing_celebration_images'], true)) : '' }}@endif</textarea>
+                            <p class="mt-1 text-sm text-gray-500">Imágenes que aparecerán junto al texto de celebración. Solo se mostrarán si hay texto configurado.</p>
+                            
+                            @if(isset($settings['closing_celebration_images']) && !empty(json_decode($settings['closing_celebration_images'], true)))
+                                <div class="mt-3">
+                                    <p class="text-sm text-gray-700 mb-2">Imágenes actuales de celebración:</p>
+                                    <div class="flex gap-2 flex-wrap">
+                                        @foreach(json_decode($settings['closing_celebration_images'], true) as $image)
+                                            <img src="{{ $image }}" alt="Celebración" class="h-20 w-20 object-cover rounded border">
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div>
+                            <label for="closing_banner_image" class="block text-sm font-medium text-gray-700 mb-2">
+                                URL de Imagen Banner de Cierre
+                            </label>
+                            <input type="url" name="closing_banner_image" id="closing_banner_image" 
+                                   value="{{ old('closing_banner_image', $settings['closing_banner_image'] ?? '') }}" 
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm @error('closing_banner_image') border-red-500 @enderror"
+                                   placeholder="https://ejemplo.com/banner-cierre.jpg">
+                            @error('closing_banner_image')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-sm text-gray-500">Imagen que ocupará el ancho completo de la página en la sección de cierre.</p>
+                            @if(!empty($settings['closing_banner_image'] ?? ''))
+                                <div class="mt-3">
+                                    <p class="text-sm text-gray-700 mb-2">Banner actual:</p>
+                                    <img src="{{ $settings['closing_banner_image'] }}" alt="Banner de cierre" class="w-full max-w-2xl rounded border">
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Preview -->
                 <div class="border-t pt-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Vista Previa</h3>
